@@ -6,6 +6,9 @@ from matplotlib.backends.backend_pdf import PdfPages
 import os
 from flask_mail import Mail, Message
 import config
+import time
+from datetime import timedelta, datetime
+
 
 def append_df_to_excel(filename, df):
     """
@@ -82,7 +85,7 @@ def test():
         k = inventory[inventory['Item Name'] == i]['Category'].values[0]
         l = inventory[inventory['Item Name'] == i]['Item Price'].values[0]
         display.append({'Item Name': i, 'Tab': str(j), 'Category':k, 'Price':str(l)})
-    '''
+
     dic = {}
     for i in inventory['Category'].unique():
         dic[i] = []
@@ -97,6 +100,19 @@ def test():
             l = temp[temp['Item Name'] == i]['Item Price'].values[0]
             #dic[key].append({'Item Name': i, 'Tab': str(j), 'Price': str(l)})
             dic[key].append({i: [str(l), str(j)]})
+    '''
+    dic = {}
+    for i in inventory['Category'].unique():
+        display = []
+        temp = inventory[inventory['Category'] == i]
+        dic[i] = display
+        for j in temp['Item Name']:
+            k = temp[temp['Item Name'] == j]['Tab'].values[0]
+            if j == 0:
+                j = 'Item Out of Stock'
+            l = temp[temp['Item Name'] == j]['Item Price'].values[0]
+            m = temp[temp['Item Name'] == j]['Item Code'].values[0]
+            display.append({'Item Name': j, 'Tab': str(k), 'Price': str(l), 'Item Code': str(m)})
     return jsonify(dic)
 
 
@@ -117,10 +133,11 @@ def order_submit():
 
     data = {"Name": "Karan", "Zone": "CANT A",
             "Time": "11:30 AM",
-            "Order": [{'item': 'Sugar', 'quantity': '3', 'category': 'food', 'price': '20'},
-                      {'item': 'Toilet Paper', 'quantity': '1', 'category': 'toiletry', 'price': '30'},
-                      {'item': 'Salt', 'quantity': '1', 'category': 'food', 'price': '10'},
-                      {'item': 'Potatoes', 'quantity': '5', 'category': 'food', 'price': '25'}]}
+            'Number': '6078820136',
+            "Order": [{'item': 'Sugar', 'quantity': '3', 'category': 'food', 'price': '20', 'code': '1123'},
+                      {'item': 'Toilet Paper', 'quantity': '1', 'category': 'toiletry', 'price': '30','code': '1123'},
+                            {'item': 'Salt', 'quantity': '1', 'category': 'food', 'price': '10', 'code': '1123'},
+                            {'item': 'Potatoes', 'quantity': '5', 'category': 'food', 'price': '25', 'code': '1123'}]}
 
 
     '''
@@ -128,23 +145,32 @@ def order_submit():
     '''
     order_number = generate_order_number()
 
+
+
+    today = datetime.today().strftime("%d-%m-%Y")
+    #tomorrow = datetime.today() + timedelta(1)
+    #tomorrow = tomorrow.strftime("%d-%m-%Y")
+
     df2 = pd.DataFrame(data['Order'])
+    df2 = df2.drop(columns=['category'])
+
     tc = ((df2['price'].apply(int)) * (df2['quantity'].apply(int))).sum()
 
 
     df1 = pd.DataFrame({'Order Number': str(order_number),
                         'Name': data['Name'],
-                        'Zone': data['Zone'],
-                        'Time': data['Time'],
+                        'Delivery Zone & Time': str(data['Zone'])+str(data['Time']),
+                        'Order Date' : today,
+                        'Phone Number': data['Number'],
                         'Total Cost': str(tc)}, index=[1])
 
-    order = {'ORDER ID': str(order_number), 'ORDER': [data['Order']],
-             'NAME': data['Name'], 'ZONE': data['Zone'], 'TIME': data['Time'], 'TOTAL COST': tc,
-             'STATUS': 'Received'}
+    #order = {'ORDER ID': str(order_number), 'ORDER': [data['Order']],
+    #         'NAME': data['Name'], 'ZONE': data['Zone'], 'TIME': data['Time'], 'TOTAL COST': tc,
+    #         'STATUS': 'Received'}
 
-    df3 = pd.DataFrame(order)
+    #df3 = pd.DataFrame(order)
 
-    append_df_to_excel('data/ORDERS.xlsx',df3)
+    #append_df_to_excel('data/ORDERS.xlsx',df3)
 
     #for i in df2[['item', 'quantity']].iterrows():
     #    temp = inventory['Item Name'] == i[1].values[0]
