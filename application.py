@@ -8,7 +8,7 @@ from flask_mail import Mail, Message
 import config
 import time
 from datetime import timedelta, datetime
-
+from flask_cors import CORS, cross_origin
 
 def append_df_to_excel(filename, df):
     """
@@ -56,6 +56,8 @@ app.config['MAIL_PASSWORD'] = config.MAIL_PASSWORD
 
 mail = Mail(app)
 
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 #msg = Message('test subject', sender=config.MAIL_USERNAME, recipients = ['tanaya.invictus@gmail.com',
 #                                                                         'randhir66@gmail.com'])
@@ -71,9 +73,12 @@ inventory = pd.read_excel('data/inventory.xlsx')
 
 @app.route('/')
 def home():
-    return ('<h1> Hello World </h1><div> Please Click </div> <a href=/test> Test </a> <a href=/trial> Trial </a> <a href=/submit-order> Submit - Order </a>')
+    return render_template('index.html')
 
+
+#this sends inventory json data
 @app.route('/test',methods=['POST','GET'])
+@cross_origin()
 def test():
     '''
     display = []
@@ -108,15 +113,20 @@ def test():
         dic[i] = display
         for j in temp['Item Name']:
             k = list(np.arange(1,temp[temp['Item Name'] == j]['Tab'].values[0]+1))
+            k = [str(i) for i in k]
             #if j == 0:
             #    j = 'Item Out of Stock'
             l = temp[temp['Item Name'] == j]['Item Price'].values[0]
             m = temp[temp['Item Name'] == j]['Item Code'].values[0]
-            display.append({'Item Name': j, 'Tab': str(k), 'Price': str(l), 'Item Code': str(m)})
+            display.append({'Item Name': j, 'Tab': k, 'Price': str(l), 'Item Code': str(m)})
     return jsonify(dic)
 
 
+
+
+#this sends dropzone and time json data
 @app.route('/trial', methods=['POST','GET'])
+@cross_origin()
 def trial():
     dic = {}
     for i in dropzone['Drop Point'].unique():
@@ -127,19 +137,32 @@ def trial():
 
 
 
-
+#this receives the order json data
 @app.route('/submit-order',methods=['GET','POST'])
+@cross_origin()
 def order_submit():
-
-    data = {"Name": "Karan", "Zone": "CANT A",
-            "Time": "11:30 AM",
-            'Number': '6078820136',
-            "Order": [{'item': 'Sugar', 'quantity': '3', 'category': 'food', 'price': '20', 'code': '1123'},
-                      {'item': 'Toilet Paper', 'quantity': '1', 'category': 'toiletry', 'price': '30','code': '1123'},
-                            {'item': 'Salt', 'quantity': '1', 'category': 'food', 'price': '10', 'code': '1123'},
-                            {'item': 'Potatoes', 'quantity': '5', 'category': 'food', 'price': '25', 'code': '1123'}]}
+    data = json.loads(request.data)
+    #request.get(data)
+    print("//////////////////////////")
+    print(data)
 
 
+
+    '''
+    {'Name': 'Karan Maheshwari', 'Zone': 'CANT B!11:30 AM', 'Mobile': '6078820136', 
+    'Order': [{'item': 'Britannia Nutri Choice Digestive ', 'quantity': ['1', '2', '3', '4'], 'price': '13.76', 'code': '84934'}, 
+    {'item': 'Haldiram Salt Peannut 200 gm', 'quantity': ['1', '2', '3'], 'price': '28.06', 'code': '85618'}]}
+
+    '''
+    # data = {"Name": "Karan", "Zone": "CANT A",
+    #         "Time": "11:30 AM",
+    #         'Number': '6078820136',
+    #         "Order": [{'item': 'Sugar', 'quantity': '3', 'category': 'food', 'price': '20', 'code': '1123'},
+    #                   {'item': 'Toilet Paper', 'quantity': '1', 'category': 'toiletry', 'price': '30','code': '1123'},
+    #                         {'item': 'Salt', 'quantity': '1', 'category': 'food', 'price': '10', 'code': '1123'},
+    #                         {'item': 'Potatoes', 'quantity': '5', 'category': 'food', 'price': '25', 'code': '1123'}]}
+
+    # print(data)
     '''
     need to do this
     '''
@@ -152,16 +175,17 @@ def order_submit():
     #tomorrow = tomorrow.strftime("%d-%m-%Y")
 
     df2 = pd.DataFrame(data['Order'])
-    df2 = df2.drop(columns=['category'])
+    df2['quantity'] = df2['quantity'].apply(len)
+    #df2 = df2.drop(columns=['category'])
 
-    tc = ((df2['price'].apply(int)) * (df2['quantity'].apply(int))).sum()
+    tc = ((df2['price'].apply(float)) * (df2['quantity'].apply(int))).sum()
 
-
+    z_t = data['Zone'].split('!')
     df1 = pd.DataFrame({'Order Number': str(order_number),
                         'Name': data['Name'],
-                        'Delivery Zone & Time': str(data['Zone'])+str(data['Time']),
+                        'Delivery Zone & Time': str(z_t[0]+' '+z_t[1]),
                         'Order Date' : today,
-                        'Phone Number': data['Number'],
+                        'Phone Number': data['Mobile'],
                         'Total Cost': str(tc)}, index=[1])
 
     #order = {'ORDER ID': str(order_number), 'ORDER': [data['Order']],
@@ -193,7 +217,7 @@ def order_submit():
     pp.savefig(fig, bbox_inches='tight')
     pp.close()
     subject = 'New Order # {} is placed'.format(order_number)
-    msg = Message(subject, sender='udhampurcanteen@gmail.com', recipients=['udhampurcanteen@gmail.com','karan.maheshwari14@gmail.com'])
+    msg = Message(subject, sender='udhampurcanteen@gmail.com', recipients=['udhampurcanteen@gmail.com','karthik99th.tnk@gmail.com','karan.maheshwari14@gmail.com'])
     msg.body = "This is an automated email. Check the attachment for details of the new order"
     with app.open_resource(filename) as fp:
         msg.attach('Order Number {}'.format(order_number), 'application/pdf', fp.read())
