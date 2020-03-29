@@ -62,7 +62,7 @@ mail = Mail(app)
 #toiletry = pd.read_excel('data/inventory.xlsx', index_col='Item Code', sheet_name='Toiletry')
 #cart = pd.DataFrame(columns=['Item', 'Quantity', 'Price'])
 dropzone = pd.read_excel('data/dropzone.xlsx',usecols=['Drop Point', 'Drop Time'])
-inventory = pd.read_excel('data/inventory_combined.xlsx', index_col='Item Code')
+inventory = pd.read_excel('data/inventory.xlsx')
 
 
 
@@ -87,14 +87,16 @@ def test():
     for i in inventory['Category'].unique():
         dic[i] = []
     for key in dic.keys():
-        temp = inventory[inventory['Category'] == key][['Item Name', 'Item Price', 'Tab', 'Item Qty']]
+        temp = inventory[inventory['Category'] == key][['Item Name', 'Item Price', 'Tab']]
         for i in temp['Item Name']:
-            j = min(temp[temp['Item Name'] == i]['Item Qty'].values[0],
-                    temp[temp['Item Name'] == i]['Tab'].values[0])
+            #j = min(temp[temp['Item Name'] == i]['Item Qty'].values[0],
+            #        temp[temp['Item Name'] == i]['Tab'].values[0])
+            j = temp[temp['Item Name'] == i]['Tab'].values[0]
             if j == 0:
                 j = 'Item Out of Stock'
             l = temp[temp['Item Name'] == i]['Item Price'].values[0]
-            dic[key].append({'Item Name': i, 'Tab': str(j), 'Price': str(l)})
+            #dic[key].append({'Item Name': i, 'Tab': str(j), 'Price': str(l)})
+            dic[key].append({i: [str(l), str(j)]})
     return jsonify(dic)
 
 
@@ -144,11 +146,12 @@ def order_submit():
 
     append_df_to_excel('data/ORDERS.xlsx',df3)
 
-    for i in df2[['item', 'quantity']].iterrows():
-        temp = inventory['Item Name'] == i[1].values[0]
-        qty = inventory[temp]['Item Qty']
-        inventory.loc[(temp), 'Item Qty'] = int(qty) - int(i[1].values[1])
-        inventory.to_excel('data/inventory_combined.xlsx')
+    #for i in df2[['item', 'quantity']].iterrows():
+    #    temp = inventory['Item Name'] == i[1].values[0]
+    #    qty = inventory[temp]['Item Qty']
+    #    inventory.loc[(temp), 'Item Qty'] = int(qty) - int(i[1].values[1])
+    #    inventory.to_excel('data/inventory_combined.xlsx')
+
     filename  = "orders/OrderNumber{}.pdf".format(order_number)
     fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(12, 4))
 
@@ -164,9 +167,7 @@ def order_submit():
     pp.savefig(fig, bbox_inches='tight')
     pp.close()
     subject = 'New Order # {} is placed'.format(order_number)
-    msg = Message(subject, sender='udhampurcanteen@gmail.com', recipients=['tanaya.invictus@gmail.com',
-                                                                    'randhir66@gmail.com',
-                                                                    'yathamnehal1@gmail.com'])
+    msg = Message(subject, sender='udhampurcanteen@gmail.com', recipients=['udhampurcanteen@gmail.com','karan.maheshwari14@gmail.com'])
     msg.body = "This is an automated email. Check the attachment for details of the new order"
     with app.open_resource(filename) as fp:
         msg.attach('Order Number {}'.format(order_number), 'application/pdf', fp.read())
