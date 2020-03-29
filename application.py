@@ -107,9 +107,9 @@ def test():
         temp = inventory[inventory['Category'] == i]
         dic[i] = display
         for j in temp['Item Name']:
-            k = temp[temp['Item Name'] == j]['Tab'].values[0]
-            if j == 0:
-                j = 'Item Out of Stock'
+            k = list(np.arange(1,temp[temp['Item Name'] == j]['Tab'].values[0]+1))
+            #if j == 0:
+            #    j = 'Item Out of Stock'
             l = temp[temp['Item Name'] == j]['Item Price'].values[0]
             m = temp[temp['Item Name'] == j]['Item Code'].values[0]
             display.append({'Item Name': j, 'Tab': str(k), 'Price': str(l), 'Item Code': str(m)})
