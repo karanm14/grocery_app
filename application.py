@@ -141,33 +141,20 @@ def trial():
 @app.route('/submit-order',methods=['GET','POST'])
 @cross_origin()
 def order_submit():
-    data = json.loads(request.data)
+    #data = json.loads(request.data)
     #request.get(data)
-    print("//////////////////////////")
-    print(data)
+    #print("//////////////////////////")
+    #print(data)
 
+    data = {"Name": "Karan", "Zone": "CANT A!11:30 AM",
+            'Mobile': '6078820136',
+            "Order": [{'item': 'Sugar', 'quantity': '3', 'category': 'food', 'price': '20', 'code': '1123'},
+                      {'item': 'Toilet Paper', 'quantity': '1', 'category': 'toiletry', 'price': '30', 'code': '1123'},
+                      {'item': 'Salt', 'quantity': '1', 'category': 'food', 'price': '10', 'code': '1123'},
+                      {'item': 'Potatoes', 'quantity': '5', 'category': 'food', 'price': '25', 'code': '1123'}],
+            "Feedback": "Hey"}
 
-
-    '''
-    {'Name': 'Karan Maheshwari', 'Zone': 'CANT B!11:30 AM', 'Mobile': '6078820136', 
-    'Order': [{'item': 'Britannia Nutri Choice Digestive ', 'quantity': ['1', '2', '3', '4'], 'price': '13.76', 'code': '84934'}, 
-    {'item': 'Haldiram Salt Peannut 200 gm', 'quantity': ['1', '2', '3'], 'price': '28.06', 'code': '85618'}]}
-
-    '''
-    # data = {"Name": "Karan", "Zone": "CANT A",
-    #         "Time": "11:30 AM",
-    #         'Number': '6078820136',
-    #         "Order": [{'item': 'Sugar', 'quantity': '3', 'category': 'food', 'price': '20', 'code': '1123'},
-    #                   {'item': 'Toilet Paper', 'quantity': '1', 'category': 'toiletry', 'price': '30','code': '1123'},
-    #                         {'item': 'Salt', 'quantity': '1', 'category': 'food', 'price': '10', 'code': '1123'},
-    #                         {'item': 'Potatoes', 'quantity': '5', 'category': 'food', 'price': '25', 'code': '1123'}]}
-
-    # print(data)
-    '''
-    need to do this
-    '''
     order_number = generate_order_number()
-
 
 
     today = datetime.today().strftime("%d-%m-%Y")
@@ -178,7 +165,7 @@ def order_submit():
     df2['quantity'] = df2['quantity'].apply(len)
     #df2 = df2.drop(columns=['category'])
 
-    tc = ((df2['price'].apply(float)) * (df2['quantity'].apply(int))).sum()
+    tc = round(((df2['price'].apply(float)) * (df2['quantity'].apply(int))).sum(),2) + 3
 
     z_t = data['Zone'].split('!')
     df1 = pd.DataFrame({'Order Number': str(order_number),
@@ -203,29 +190,35 @@ def order_submit():
     #    inventory.to_excel('data/inventory_combined.xlsx')
 
     filename  = "orders/OrderNumber{}.pdf".format(order_number)
-    fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(12, 4))
+    fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, ncols=1, figsize=(12, 8))
 
     ax1.axis('tight')
     ax1.axis('off')
-    ax1.set_title('Bill')
+    ax1.set_title('Bill (Final Amount has been rounded and includes a packing charge of 3₹)')
     the_table1 = ax1.table(cellText=df1.values, colLabels=df1.columns, loc='center')
     ax2.set_title("Breakdown")
     ax2.axis('tight')
     ax2.axis('off')
     the_table2 = ax2.table(cellText=df2.values, colLabels=df2.columns, loc='center')
+
+    if data['Feedback']:
+        df3 = pd.DataFrame({'Feedback or Request: ': data['Feedback']}, index=[1])
+
+        ax3.set_title("Feedback or Request")
+        ax3.axis('tight')
+        ax3.axis('off')
+        the_table3 = ax3.table(cellText= df3.values, colLabels=df3.columns, loc='center')
+
     pp = PdfPages(filename)
     pp.savefig(fig, bbox_inches='tight')
     pp.close()
     subject = 'New Order # {} is placed'.format(order_number)
-    msg = Message(subject, sender='udhampurcanteen@gmail.com', recipients=['udhampurcanteen@gmail.com','karthik99th.tnk@gmail.com','karan.maheshwari14@gmail.com'])
+    msg = Message(subject, sender='udhampurcanteen@gmail.com', recipients=['udhampurcanteen@gmail.com'])#,'karthik99th.tnk@gmail.com','karan.maheshwari14@gmail.com'])
     msg.body = "This is an automated email. Check the attachment for details of the new order"
     with app.open_resource(filename) as fp:
         msg.attach('Order Number {}'.format(order_number), 'application/pdf', fp.read())
     mail.send(msg)
-    #mail
-
-
-
+    
     return "Success"
 
 
