@@ -141,18 +141,18 @@ def trial():
 @app.route('/submit-order',methods=['GET','POST'])
 @cross_origin()
 def order_submit():
-    #data = json.loads(request.data)
+    data = json.loads(request.data)
     #request.get(data)
-    #print("//////////////////////////")
-    #print(data)
+    # print("//////////////////////////")
+    print(data)
 
-    data = {"Name": "Karan", "Zone": "CANT A!11:30 AM",
-            'Mobile': '6078820136',
-            "Order": [{'item': 'Sugar', 'quantity': '3', 'category': 'food', 'price': '20', 'code': '1123'},
-                      {'item': 'Toilet Paper', 'quantity': '1', 'category': 'toiletry', 'price': '30', 'code': '1123'},
-                      {'item': 'Salt', 'quantity': '1', 'category': 'food', 'price': '10', 'code': '1123'},
-                      {'item': 'Potatoes', 'quantity': '5', 'category': 'food', 'price': '25', 'code': '1123'}],
-            "Feedback": "Hey"}
+    # data = {"Name": "Karan", "Zone": "CANT A!11:30 AM",
+    #         'Mobile': '6078820136',
+    #         "Order": [{'item': 'Sugar', 'quantity': '3', 'category': 'food', 'price': '20', 'code': '1123'},
+    #                   {'item': 'Toilet Paper', 'quantity': '1', 'category': 'toiletry', 'price': '30', 'code': '1123'},
+    #                   {'item': 'Salt', 'quantity': '1', 'category': 'food', 'price': '10', 'code': '1123'},
+    #                   {'item': 'Potatoes', 'quantity': '5', 'category': 'food', 'price': '25', 'code': '1123'}],
+    #         "Feedback": "Hey"}
 
     order_number = generate_order_number()
 
