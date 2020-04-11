@@ -162,17 +162,18 @@ def order_submit():
     #tomorrow = tomorrow.strftime("%d-%m-%Y")
 
     df2 = pd.DataFrame(data['Order'])
-    df2['quantity'] = df2['quantity'].apply(len)
+    df2 = df2.drop(columns=['key','totalprice'])
+    #df2['quantity'] = df2['quantity'].apply(len)
     #df2 = df2.drop(columns=['category'])
 
-    tc = round(((df2['price'].apply(float)) * (df2['quantity'].apply(int))).sum(),2) + 3
+    #df2['price']
+    tc = round(((df2['price'].apply(float)) * (df2['quantity'].apply(int))).sum()) + 3
 
     z_t = data['Zone'].split('!')
     df1 = pd.DataFrame({'Order Number': str(order_number),
                         'Name': data['Name'],
                         'Delivery Zone & Time': str(z_t[0]+' '+z_t[1]),
                         'Order Date' : today,
-                        'Phone Number': data['Mobile'],
                         'Total Cost': str(tc)}, index=[1])
 
     #order = {'ORDER ID': str(order_number), 'ORDER': [data['Order']],
@@ -190,7 +191,7 @@ def order_submit():
     #    inventory.to_excel('data/inventory_combined.xlsx')
 
     filename  = "orders/OrderNumber{}.pdf".format(order_number)
-    fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, ncols=1, figsize=(12, 8))
+    fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, ncols=1, figsize=(18, 8))
 
     ax1.axis('tight')
     ax1.axis('off')
@@ -201,13 +202,15 @@ def order_submit():
     ax2.axis('off')
     the_table2 = ax2.table(cellText=df2.values, colLabels=df2.columns, loc='center')
 
-    if data['Feedback']:
-        df3 = pd.DataFrame({'Feedback or Request: ': data['Feedback']}, index=[1])
 
-        ax3.set_title("Feedback or Request")
-        ax3.axis('tight')
-        ax3.axis('off')
-        the_table3 = ax3.table(cellText= df3.values, colLabels=df3.columns, loc='center')
+    #if data['Feedback'] is None:
+    #    data['Feedback'] = ' '
+    df3 = pd.DataFrame({'Feedback or Request: ': data['Feedback']}, index=[1])
+
+    ax3.set_title("Feedback or Request")
+    ax3.axis('tight')
+    ax3.axis('off')
+    the_table3 = ax3.table(cellText= df3.values, colLabels=df3.columns, loc='center')
 
     pp = PdfPages(filename)
     pp.savefig(fig, bbox_inches='tight')
@@ -218,8 +221,8 @@ def order_submit():
     with app.open_resource(filename) as fp:
         msg.attach('Order Number {}'.format(order_number), 'application/pdf', fp.read())
     mail.send(msg)
-    
-    return "Success"
+    #Your order has been placed. Your order id is ... Kindly meet our agent at ..loc 
+    return jsonify(order_number,tc,z_t[0],z_t[1])
 
 
 
